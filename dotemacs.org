@@ -3163,7 +3163,8 @@ Set refile targets according to my setup
 (setq org-refile-targets
       '(
         ("~/org/agenda.org"    :maxlevel . 2)
-        ("~/org/inbox.org"     :maxlevel . 1)
+        ("~/org/inbox.org"     :maxlevel . 2)
+        ("~/org/todo.org"      :maxlevel . 2)
 ;;        ("~/Documents/org/organizer.org" :tag      . "tasks")
 ;;        ("~/Documents/org/organizer.org" :tag      . "notes")
 ;;        ("~/Documents/org/organizer.org" :tag      . "mails")
@@ -3177,8 +3178,8 @@ Set refile targets according to my setup
 #+begin_src emacs-lisp :prologue "" :epilogue ""
 
 (setq org-capture-templates
-      '(("i" "Inbox"  entry   (file "inbox.org")
-         "* TODO %?Task :INBOX:\n")
+      '(("i" "Inbox"  entry   (file "todo.org")
+         "* TODO %?Task :TASK:\n")
 
         ("m" "Meeting" entry  (file+headline "agenda.org" "Future")
          "* %?Meeting   <%<%Y-%m-%d %a 12:00-13:00>>"
