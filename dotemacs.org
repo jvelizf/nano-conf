@@ -191,6 +191,8 @@ Packages used in this specific configuration. You may want to adapt this list. T
         polymode
         jupyter
         elpy
+        ;;org-bullets
+        org-superstar
         flycheck
         py-autopep8
         magit               ; A Git porcelain inside Emacs.
@@ -256,10 +258,6 @@ My personal packages
 ;; Replace keywords with SVG tags
 (straight-use-package
  '(svg-tag-mode :type git :host github :repo "rougier/svg-tag-mode"))
-
-;; Dashboard for mu4e
-(straight-use-package
- '(mu4e-dashboard :type git :host github :repo "rougier/mu4e-dashboard"))
 
 ;; Folding mode for mu4e
 (straight-use-package
@@ -1649,7 +1647,7 @@ Note that the Victor Mono needs to be hacked such as to have the same line heigh
 (set-face-attribute 'default nil
                     :family "Roboto Mono"
                     :weight 'light
-                    :height 140)
+                    :height 130)
 
 (set-face-attribute 'bold nil
                     :family "Roboto Mono"
@@ -2660,6 +2658,7 @@ An autoload function for my/config (that will load org mode).
               org-ellipsis " …"              ; Nicer ellipsis
               org-tags-column 1              ; Tags next to header title
               org-hide-emphasis-markers t    ; Hide markers
+              org-list-allow-alphabetical t
               org-cycle-separator-lines 2    ; Number of empty lines between sections
               org-use-tag-inheritance nil    ; Tags ARE NOT inherited 
               org-use-property-inheritance t ; Properties ARE inherited
@@ -2669,7 +2668,9 @@ An autoload function for my/config (that will load org mode).
               org-return-follows-link nil    ; Follow links when hitting return
               org-image-actual-width nil     ; Resize image to window width
               org-indirect-buffer-display 'other-window ; Tab on a task expand it in a new window
-              org-outline-path-complete-in-steps nil) ; No steps in path display
+              org-outline-path-complete-in-steps nil
+              org-log-done 'time
+              ) ; No steps in path display
 
 #+end_src
 
@@ -2685,29 +2686,32 @@ We adapt fill functions according to the indent level.
 
 #+begin_src emacs-lisp
 
- (defun my/calc-offset-on-org-level ()
-   "Calculate offset (in chars) on current level in org mode file."
+(defun my/calc-offset-on-org-level ()
+  "Calculate offset (in chars) on current level in org mode file."
 
-   (* (or (org-current-level) 0) org-indent-indentation-per-level))
+  (* (or (org-current-level) 0) org-indent-indentation-per-level))
 
- (defun my/org-fill-paragraph (&optional justify region)
-   "Calculate apt fill-column value and fill paragraph."
-  
-   (let* ((fill-column (- fill-column (my/calc-offset-on-org-level))))
-     (org-fill-paragraph justify region)))
+(defun my/org-fill-paragraph (&optional justify region)
+  "Calculate apt fill-column value and fill paragraph."
 
- (defun my/org-auto-fill-function ()
-   "Calculate apt fill-column value and do auto-fill"
-  
-   (let* ((fill-column (- fill-column (my/calc-offset-on-org-level))))
-     (org-auto-fill-function)))
+  (let* ((fill-column (- fill-column (my/calc-offset-on-org-level))))
+    (org-fill-paragraph justify region)))
 
- (defun my/org-mode-hook ()
-   (setq fill-paragraph-function #'my/org-fill-paragraph
-         normal-auto-fill-function #'my/org-auto-fill-function))
+(defun my/org-auto-fill-function ()
+  "Calculate apt fill-column value and do auto-fill"
 
- (add-hook 'org-load-hook 'my/org-mode-hook)
- (add-hook 'org-mode-hook 'my/org-mode-hook)
+  (let* ((fill-column (- fill-column (my/calc-offset-on-org-level))))
+    (org-auto-fill-function)))
+
+(defun my/org-mode-hook ()
+  (setq fill-paragraph-function #'my/org-fill-paragraph
+        normal-auto-fill-function #'my/org-auto-fill-function))
+
+
+;;(add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+(add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
+
+(setq org-superstar-headline-bullets-list '("⁖" "◉" "○" "🞛" "▷"))
 
 #+end_src
 
@@ -3096,24 +3100,6 @@ The task agenda
                    (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp))
                    (org-agenda-overriding-header (propertize " Todo \n" 'face 'nano-strong))))
 
-           (tags "+TALK+TIMESTAMP>=\"<now>\""
-                 ((org-agenda-span 90)
-                  (org-agenda-max-tags 5)
-                  (org-agenda-prefix-format '((tags   . " %(my/org-agenda-custom-date) ")))
-                  (org-agenda-overriding-header "\n Upcoming talks\n")))
-
-           (tags "TEACHING+TIMESTAMP>=\"<now>\""
-                 ((org-agenda-span 90)
-                  (org-agenda-max-tags 5)
-                  (org-agenda-prefix-format '((tags   . " %(my/org-agenda-custom-date) ")))
-                  (org-agenda-overriding-header "\n Upcoming lessons\n")))
-
-           (tags "TRAVEL+TIMESTAMP>=\"<now>\""
-                 ((org-agenda-span 90)
-                  (org-agenda-max-tags 5)
-                  (org-agenda-prefix-format '((tags .  " %(my/org-agenda-custom-date) ")))
-                  (org-agenda-overriding-header "\n Upcoming travels\n")))
-
            (tags "DEADLINE>=\"<today>\""
                   ((org-agenda-span 90)
                    (org-agenda-max-tags 5)
@@ -3178,7 +3164,7 @@ Set refile targets according to my setup
 #+begin_src emacs-lisp :prologue "" :epilogue ""
 
 (setq org-capture-templates
-      '(("i" "Inbox"  entry   (file "todo.org")
+      '(("i" "Task"  entry   (file "todo.org")
          "* TODO %?Task :TASK:\n")
 
         ("m" "Meeting" entry  (file+headline "agenda.org" "Future")
